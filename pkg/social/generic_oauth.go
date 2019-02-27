@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -57,14 +58,19 @@ func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client, data *UserInfoJson) bool {
+	var err error
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client)
-	if err != nil {
-		return false
+	organizations := strings.Fields(data.Organization)
+
+	if len(organizations) == 0 {
+		organizations, err = s.FetchOrganizations(client)
+		if err != nil {
+			return false
+		}
 	}
 
 	for _, allowedOrganization := range s.allowedOrganizations {
